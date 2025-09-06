@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Ositos Especiales</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --morado:#b07fff;
+      --celeste:#5ec9f9;
+      --rosa:#ff7ed9;
+      --blanco:#ffffff;
+    }
+    *{box-sizing:border-box}
+    body,html{margin:0; height:100%; background:#000; overflow:hidden; color:#fff; text-align:center; font-family:"Poppins", sans-serif}
+
+    canvas#universo{position:fixed; inset:0; z-index:0}
+
+    .ui{position:relative; z-index:2; padding-top:18px; display:flex; flex-direction:column; align-items:center; gap:16px;}
+    .botones{display:flex; gap:12px; flex-wrap:wrap; justify-content:center;}
+
+    .boton{
+      padding:14px 28px;
+      border:3px solid var(--morado);
+      border-radius:26px;
+      background:transparent;
+      color:var(--morado);
+      font-weight:700;
+      font-size:clamp(18px, 2.2vw, 22px);
+      cursor:pointer;
+    }
+    .boton:hover{ background:#b07fff22; box-shadow:0 0 24px #b07fff55; }
+
+    .panel{
+      width:min(900px, 92vw);
+      margin-top:8px;
+      padding:22px;
+      border:3px solid var(--celeste);
+      border-radius:22px;
+      background:rgba(0,0,0,.5);
+      color:var(--celeste);
+      display:none;
+      opacity:0;
+    }
+    .panel--show{ display:block; animation:fadeIn .45s forwards }
+
+    .mensaje-final{
+      display:none;
+      font-family:"Baloo 2", cursive;
+      font-size:clamp(28px, 5vw, 60px);
+      font-weight:800;
+      color:var(--rosa);
+      opacity:0;
+    }
+    .mensaje-final--show{ display:block; animation:fadeIn .6s forwards }
+
+    .saludo{
+      position:fixed; left:50%; top:10%;
+      transform:translateX(-50%); font-family:"Baloo 2", cursive;
+      font-size:clamp(36px, 6vw, 72px);
+      text-shadow:0 0 18px #fff8, 0 0 36px #a88bff88;
+      display:none; opacity:0;
+    }
+    .saludo--show{ display:block; animation:fadeIn .6s forwards }
+    .saludo--hide{ animation:fadeOut .4s forwards }
+
+    .escena{position:fixed; inset:0; z-index:1; display:grid; place-items:center;}
+    .oso{max-width:50vw; width:clamp(260px,40vw,520px); display:none; opacity:0}
+    .oso--show{display:block; animation:fadeIn .6s forwards}
+    .oso--hide{animation:fadeOut .4s forwards}
+    .beso{width:clamp(220px,30vw,420px)}
+
+    .sorpresa-flex{display:flex; align-items:center; justify-content:center; gap:20px; flex-wrap:wrap;}
+
+    .panel p{margin:0; font-size:clamp(20px, 2.1vw, 26px); font-weight:600;}
+    .type{display:inline-block}
+    .cursor{display:inline-block; width:.6ch; border-right:3px solid var(--celeste); animation:blink 1s step-end infinite;}
+    @keyframes blink{50%{border-color:transparent}}
+    @keyframes fadeIn{from{opacity:0} to{opacity:1}}
+    @keyframes fadeOut{from{opacity:1} to{opacity:0}}
+  </style>
+</head>
+<body>
+  <canvas id="universo"></canvas>
+
+  <div class="ui">
+    <div class="botones">
+      <button id="btnIniciar" class="boton">✨ Iniciar con el Mensaje ✨</button>
+      <button id="btnSorpresa" class="boton" style="display:none;">🎁 Sorpresa</button>
+    </div>
+    <div id="panelAbrazo" class="panel"></div>
+    <div id="panelSorpresa" class="panel"></div>
+    <div id="finalGrande" class="mensaje-final"></div>
+  </div>
+
+  <div id="saludo" class="saludo">Holaaa ✨</div>
+
+  <div class="escena">
+    <img id="osoHola" class="oso" src="oso-hola.gif" alt="Oso hola">
+  </div>
+
+  <audio id="musica" src="musica.mp3" preload="auto" loop></audio>
+
+  <script>
+    // Fondo estrellas
+    const canvas=document.getElementById('universo'),ctx=canvas.getContext('2d');
+    function fit(){canvas.width=innerWidth;canvas.height=innerHeight}
+    addEventListener('resize',fit);fit();
+    let estrellas=[];
+    function crearEstrellas(n=200){estrellas=[];for(let i=0;i<n;i++)estrellas.push({x:Math.random()*canvas.width,y:Math.random()*canvas.height,r:Math.random()*1.8+0.2,s:Math.random()*0.6+0.2})}
+    crearEstrellas();
+    function dibujar(){ctx.fillStyle='#000';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#fff';for(const e of estrellas){ctx.beginPath();ctx.arc(e.x,e.y,e.r,0,Math.PI*2);ctx.fill();e.y+=e.s;if(e.y>canvas.height){e.y=-2;e.x=Math.random()*canvas.width}}requestAnimationFrame(dibujar)}
+    dibujar();
+
+    // Elementos
+    const $=s=>document.querySelector(s);
+    const btnIniciar=$("#btnIniciar"),btnSorpresa=$("#btnSorpresa");
+    const panelAbrazo=$("#panelAbrazo"),panelSorpresa=$("#panelSorpresa"),finalGrande=$("#finalGrande");
+    const saludo=$("#saludo"),osoHola=$("#osoHola"),musica=$("#musica");
+
+    // Escribir texto
+    function escribir(el,texto,done){
+      el.innerHTML=""; 
+      el.style.display='block';el.classList.add('panel--show');
+      const p=document.createElement('p');
+      const span=document.createElement('span');span.className='type';
+      const cursor=document.createElement('span');cursor.className='cursor';
+      p.appendChild(span);p.appendChild(cursor);el.appendChild(p);
+      let i=0;
+      function tick(){span.textContent=texto.slice(0,i);i++;
+        if(i<=texto.length)setTimeout(tick,25);
+        else{cursor.remove();if(done)done();}
+      } tick();
+    }
+
+    // Reset
+    function resetTodo(){
+      saludo.style.display="none";saludo.className="saludo";
+      osoHola.style.display="none";osoHola.className="oso";
+      panelAbrazo.style.display="none";panelAbrazo.innerHTML="";
+      panelSorpresa.style.display="none";panelSorpresa.innerHTML="";
+      finalGrande.style.display="none";finalGrande.className="mensaje-final";
+      btnSorpresa.style.display="none";
+    }
+
+    // Iniciar
+    btnIniciar.onclick=()=>{
+      resetTodo();
+      musica.currentTime=0;musica.play().catch(()=>{});
+      saludo.classList.add('saludo--show');
+      osoHola.classList.add('oso--show');
+      setTimeout(()=>{
+        saludo.classList.add('saludo--hide');
+        escribir(panelAbrazo,
+          "No importa el momento, ni la hora, me gustaría siempre poderte dar un abrazo, para recordarte lo especial y única que eres para mí, preciosa.",
+          ()=>{ btnSorpresa.style.display='inline-block'; }
+        );
+      },2000);
+    };
+
+    // Sorpresa
+    btnSorpresa.onclick=()=>{
+      panelSorpresa.innerHTML="";
+      panelSorpresa.style.display='block';panelSorpresa.classList.add('panel--show');
+      const wrap=document.createElement('div');wrap.className='sorpresa-flex';
+      const tbox=document.createElement('div');const p=document.createElement('p');
+      const span=document.createElement('span');span.className='type';
+      const cursor=document.createElement('span');cursor.className='cursor';
+      p.appendChild(span);p.appendChild(cursor);tbox.appendChild(p);
+      const osoBeso=document.createElement('img');osoBeso.src='oso-beso.gif';osoBeso.className='beso';
+      wrap.appendChild(tbox);wrap.appendChild(osoBeso);panelSorpresa.appendChild(wrap);
+      const texto="¿Piensas que me voy a olvidar de mi beso?, pues te equivocas.";
+      let i=0;function tick(){span.textContent=texto.slice(0,i);i++;
+        if(i<=texto.length)setTimeout(tick,25);
+        else{cursor.remove();finalGrande.textContent="Me importas y me encantas, besos.";finalGrande.classList.add('mensaje-final--show')}
+      } tick();
+    };
+  </script>
+</body>
+</html>
